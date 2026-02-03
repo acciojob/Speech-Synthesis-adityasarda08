@@ -29,14 +29,81 @@
     </div>
 
 <script>
+ 
   const msg = new SpeechSynthesisUtterance();
   let voices = [];
+
   const voicesDropdown = document.querySelector('[name="voice"]');
   const options = document.querySelectorAll('[type="range"], [name="text"]');
   const speakButton = document.querySelector('#speak');
   const stopButton = document.querySelector('#stop');
+  const textArea = document.querySelector('[name="text"]');
 
-  //Your code goes here
+  // Fetch and populate voices
+  function populateVoices() {
+    voices = speechSynthesis.getVoices();
+
+    if (!voices.length) {
+      voicesDropdown.innerHTML = '<option>No voices available</option>';
+      return;
+    }
+
+    voicesDropdown.innerHTML = voices
+      .map(
+        voice =>
+          `<option value="${voice.name}">
+            ${voice.name} (${voice.lang})
+          </option>`
+      )
+      .join('');
+  }
+
+  // Set selected voice
+  function setVoice() {
+    msg.voice = voices.find(voice => voice.name === this.value);
+    restartSpeech();
+  }
+
+  // Update rate, pitch, and text dynamically
+  function setOptions() {
+    msg[this.name] = this.value;
+    if (speechSynthesis.speaking) {
+      restartSpeech();
+    }
+  }
+
+  // Start speaking
+  function speak() {
+    if (!textArea.value.trim()) {
+      alert('Please enter some text to speak!');
+      return;
+    }
+
+    speechSynthesis.cancel(); // Stop previous speech
+    msg.text = textArea.value;
+    speechSynthesis.speak(msg);
+  }
+
+  // Stop speaking
+  function stop() {
+    speechSynthesis.cancel();
+  }
+
+  // Restart speech (used when changing voice/rate/pitch mid-speech)
+  function restartSpeech() {
+    stop();
+    speak();
+  }
+
+  // Event Listeners
+  speechSynthesis.addEventListener('voiceschanged', populateVoices);
+  voicesDropdown.addEventListener('change', setVoice);
+  options.forEach(option => option.addEventListener('input', setOptions));
+  speakButton.addEventListener('click', speak);
+  stopButton.addEventListener('click', stop);
+
+  // Initial voice load (for some browsers)
+  populateVoices();
 </script>
 
 </body>
